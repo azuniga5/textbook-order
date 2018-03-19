@@ -5508,7 +5508,6 @@ for ( i = ( files.length - 1 ); i >= 0; i-- ){
 var file = files[i];
 if (_uploadType !== "boardItem" &&
 _uploadType !== "boardPhotoHeader" &&
-!config.featureFlags["can-run-server-side-extaction"] &&
 isSourceFile(file.name)
 ) {
 failedFileExtensions.push(getFileExtension(file.name))
@@ -5554,6 +5553,14 @@ var file = files[i];
 if ( isMissingFileExtension( file.name ) ) {
 fileIsMissingExtension = file.name;
 delete files[ i ];
+}else if ( file.size > maxInBytes && isImage( file.name ) ) { // limit the max file size, unless it's a PDF or a screen source file
+$timeout(function() {
+scope.openModalWindow(
+"error",
+( "The file, \"" + file.name + ",\" is too large. Are you sure that it's not a mislabeled file?" )
+);
+});
+delete files[ i ];
 }else{
 filesToAdd.unshift(file);
 }
@@ -5567,6 +5574,7 @@ return filesToAdd;
 }
 function validateBoardHeaderFiles( files ) {
 var filesToAdd = [];
+var fileExcludedBasedOnName = null;
 if( files.length > 1 ) {
 scope.openModalWindow("error", "You can only use a single image as the header.");
 } else {
@@ -5575,6 +5583,13 @@ var file = files[i];
 if( ! isImage( file.name ) ) {
 $timeout(function() {
 scope.openModalWindow("error", "Header images must have a .jpg, .png, or .gif extension.");
+});
+}else if (file.size > maxInBytes) { // limit the max file size, unless it's a PDF or a screen source file
+$timeout(function() {
+scope.openModalWindow(
+"error",
+( "The file, \"" + file.name + ",\" is too large. Are you sure that it's not a mislabeled file?" )
+);
 });
 } else {
 filesToAdd.push(file);
